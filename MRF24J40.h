@@ -29,7 +29,7 @@
 // Define MRF24J40MA or MRF24J40MD based on the chip used
 #define MRF24J40MA	// power setup, rf_data_mode, mrf_rssi need to be updated for MD
 
-#define NODE2
+#define NODE3
 
 // Only require MAC address for address decode
 #ifdef NODE1 
@@ -42,7 +42,7 @@
 	#define MAC_ADDR	0x000C
 #endif
 
-#define RADIO_CHANNEL 20
+#define RADIO_CHANNEL 1
 
 #include "LPC17xx.h"
 
