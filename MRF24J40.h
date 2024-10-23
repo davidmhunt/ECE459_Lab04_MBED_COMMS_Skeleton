@@ -29,6 +29,7 @@
 // Define MRF24J40MA or MRF24J40MD based on the chip used
 #define MRF24J40MA	// power setup, rf_data_mode, mrf_rssi need to be updated for MD
 
+//TODO: set the node of the MBED board here
 #define NODE2
 
 // Only require MAC address for address decode
@@ -42,6 +43,7 @@
 	#define MAC_ADDR	0x000C
 #endif
 
+//TODO: Set the radio_channel to be your lab group number
 #define RADIO_CHANNEL 20
 
 #include "LPC17xx.h"

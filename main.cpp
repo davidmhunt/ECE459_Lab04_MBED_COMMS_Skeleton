@@ -2,6 +2,11 @@
 #include "rtos.h"    
 #include "SerialStream.h"        
 #include "basic_rf.h"
+#include <string.h>
+
+//TODO: In the MRF24J40.h file, do the following:
+// 1. #define NODE1,NODE2, or NODE3 (only one per MBED)
+// 2. set the RADIO_CHANNEL to your lab group on canvas
 
 BufferedSerial serial(USBTX, USBRX, 115200);
 SerialStream<BufferedSerial> pc(serial);
@@ -32,6 +37,11 @@ uint8_t rx_buf_empty = 1;
 static uint16_t rxContentSuccess = 0;
 // Counter for number of detected packets from the preamble perspective, regardless of contents
 static uint16_t mrfRxISRcallbackCounter = 0;
+// Counter for number of relayed packets for node 2
+static uint16_t txRelayedPackets = 0;
+// Counters for the number of packets to send
+static int packetsToSend = 1000;
+static int sentPackets = 0;
 
 
 // Count number of detected packets and toggle a pin for each packet
@@ -44,7 +54,6 @@ void mrfIsrCallback()
 
 int main(void)
 {   
-    // To switch between the 3 versions of this code, refer to MRF24J40.h and define NODE1, NODE2, *or* NODE3 (not multiple)
 
 #ifdef NODE1
     led1=1;
@@ -61,7 +70,7 @@ int main(void)
         
     // ------------------------------ PLACE CODE HERE ----------------------------------
     // TODO:
-    //  (1) set up the reciever buffer and metadata (i.e., max length) in rfRxInfo
+    //  (1) set up the reciever buffer and metadata (i.e., max length, payload buffer) in rfRxInfo
     //  (2) initialize radio module
     //  (3) enable acknowledgement packets (if needed)
 
@@ -78,7 +87,7 @@ void rx_task ()
     // TODO:
     //  (1) set MAC address 
     //  (2) wait until RX packet is received
-    //  (3) upon packet received, increment rxContentSuccess. Optionally, blink an LED to confirm receipt.
+    //  (3) upon packet received, increment rxContentSuccess, reset rx_buf_empty flag. Optionally, blink an LED to confirm receipt.
                 
 #ifdef NODE2                
     // CODE FOR 3-NODE CONFIGURATION. If node2, receive THEN send packet. IGNORE FOR 2-NODE CONFIGURATION.
@@ -89,11 +98,11 @@ void rx_task ()
 
 void monitor_task ()
 {
-    while(1)
-    {
-        pc.printf("Decoded pkts: %d Perfect pkts: %d\n", mrfRxISRcallbackCounter, rxContentSuccess);
+        pc.printf("Decoded pkts: %d Perfect pkts: %d, Relayed pkts: %d\n",
+         mrfRxISRcallbackCounter,
+         rxContentSuccess,
+         txRelayedPackets);
         ThisThread::yield();
-    }
 }
 
 void tx_task ()
@@ -120,15 +129,15 @@ void nrk_create_taskset ()
 #ifdef NODE2
   // EventQueue for NODE2 (receiver (+ transmitter for 3-node configuration))
   node2_thread.start(callback(&node2_queue,&EventQueue::dispatch_forever));
-  node2_queue.call_every(50,&rx_task);
+  node2_queue.call_every(50ms,&rx_task);
   monitor_thread.start(callback(&monitor_queue,&EventQueue::dispatch_forever));
-  monitor_queue.call_every(50,&monitor_task);
+  monitor_queue.call_every(500ms,&monitor_task);
 #endif
 #ifdef NODE3
   // EventQueue for NODE3 (receiver)
   node3_thread.start(callback(&node3_queue,&EventQueue::dispatch_forever));
-  node3_queue.call_every(50,&rx_task);
+  node3_queue.call_every(50ms,&rx_task);
   monitor_thread.start(callback(&monitor_queue,&EventQueue::dispatch_forever));
-  monitor_queue.call_every(50,&monitor_task);
+  monitor_queue.call_every(500ms,&monitor_task);
 #endif
 }
